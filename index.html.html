@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ThaliBloom</title>
+<style>
+:root{--bg:#fbf7ef;--card:#fffdf8;--sage:#8fa98a;--sd:#4f6b4a;--leaf:#6b9a5b;--peach:#f7dcc8;--ink:#2d3a2b;--mut:#6f7a6c;--ln:#e8e2d3;color-scheme:light;
+padding-top:env(safe-area-inset-top,0px);box-sizing:border-box}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Georgia,"Times New Roman",serif}
+h1,h2,h3{font-weight:600;margin:.2em 0}.sans,button,input,select,textarea{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:860px;margin:0 auto;padding:16px 16px 110px}
+.card{background:var(--card);border-radius:20px;padding:18px;margin:14px 0;box-shadow:0 6px 22px rgba(79,107,74,.10);animation:up .35s ease}
+@keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:30px;
+background:radial-gradient(circle at 20% 15%,var(--peach),transparent 45%),radial-gradient(circle at 85% 85%,#dfe9d6,transparent 50%),var(--bg)}
+.thali{width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,#fffdf8 38%,#e9dfc9 40%,#fffdf8 44%);box-shadow:0 14px 40px rgba(79,107,74,.25);position:relative;margin:10px auto 22px}
+.thali i{position:absolute;width:56px;height:56px;border-radius:50%}
+button{border:0;border-radius:999px;padding:12px 22px;font-size:15px;cursor:pointer;background:var(--sd);color:#fff;transition:transform .15s}
+button:hover{transform:translateY(-1px)}button.alt{background:var(--peach);color:var(--ink)}button.sm{padding:7px 14px;font-size:13px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #2f6fba;outline-offset:2px}
+label{display:block;font:600 13px system-ui;margin:12px 0 4px;color:var(--sd)}
+input,select,textarea{width:100%;padding:11px 13px;border:1px solid var(--ln);border-radius:12px;background:#fff;font-size:15px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row>*{flex:1}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.sub{color:var(--mut);font:13px system-ui}.note{background:var(--peach);border-radius:12px;padding:10px 12px;font:13px system-ui;margin:10px 0}
+nav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,253,248,.96);border-top:1px solid var(--ln);display:flex;justify-content:space-around;
+padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));z-index:5;backdrop-filter:blur(8px)}
+nav button{background:none;color:var(--mut);display:flex;flex-direction:column;align-items:center;font:12px system-ui;padding:4px 8px;border-radius:12px;gap:2px}
+nav button.on{color:var(--sd);font-weight:700}nav .ic{font-size:20px}
+nav .add{background:var(--sd);color:#fff;width:56px;height:56px;border-radius:50%;margin-top:-26px;font-size:28px;justify-content:center;box-shadow:0 8px 18px rgba(79,107,74,.4)}
+.rings{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}.ring{text-align:center;font:12px system-ui}
+.bar{height:10px;background:#eee8d8;border-radius:9px;overflow:hidden}.bar b{display:block;height:100%;background:linear-gradient(90deg,var(--sage),var(--leaf));transition:width .5s}
+.chip{display:inline-block;padding:4px 11px;border-radius:99px;background:#e6efdf;font:12px system-ui;margin:2px}
+.chip.on{background:var(--sd);color:#fff}
+.photo{width:100%;max-height:200px;object-fit:cover;border-radius:14px}
+.wk{display:flex;gap:6px;align-items:flex-end;height:90px}.wk div{flex:1;background:var(--sage);border-radius:6px 6px 0 0;min-height:3px}
+.hide{display:none}
+</style></head><body>
+<div id="app"></div><nav id="nav" class="hide" aria-label="Main"></nav>
+<script>
+// ---- data (approximate typical values per serving; estimates, not verified measurements) ----
+const FOODS={
+"Idli (2 pcs)":[116,4,24,.4,1],"Plain dosa (1)":[133,3,23,3,1],"Puttu (1 cup)":[200,4,40,3,2],"Appam (1)":[120,2,22,2,.5],
+"Cooked rice (1 cup)":[205,4,45,.4,.6],"Chapati (1)":[100,3,18,2,2],"Dal (1 katori)":[120,7,18,2,3],"Sambar (1 katori)":[90,4,13,2,3],
+"Boiled egg (1)":[78,6,.6,5,0],"Curd (1 katori)":[60,3,5,3,0],"Curd rice (1 cup)":[230,6,35,7,1],"Milk (1 glass)":[120,6,10,6,0],
+"Fish curry (1 katori)":[150,17,4,7,.5],"Vegetable thoran (1 katori)":[80,2,9,4,3],"Kadala curry (1 katori)":[170,9,24,4,7],
+"Beans curry (1 katori)":[70,3,9,3,3],"Banana (1)":[105,1,27,.4,3],"Peanuts (30 g)":[170,7,5,14,2.5]};
+const MEALS=["Breakfast","Lunch","Dinner","Snack"];
+const REC=[
+{n:"Dosa with sambar",m:"Breakfast",t:25,c:20,ing:["dosa batter","dal","vegetables","onion"],items:["Plain dosa (1)","Sambar (1 katori)"],q:"2 dosas, 1 katori sambar",st:["Heat a tawa, spread a ladle of batter thin.","Drizzle ½ tsp oil; cook until golden.","Simmer vegetables with dal and sambar powder for sambar."]},
+{n:"Puttu with kadala curry",m:"Breakfast",t:30,c:25,ing:["rice flour","kadala","coconut","onion"],items:["Puttu (1 cup)","Kadala curry (1 katori)"],q:"1 cup puttu, 1 katori curry",st:["Moisten rice flour, steam layered with coconut.","Pressure-cook soaked kadala; temper with onion and spices."]},
+{n:"Rice, dal and thoran",m:"Lunch",t:35,c:30,ing:["rice","dal","vegetables","coconut"],items:["Cooked rice (1 cup)","Dal (1 katori)","Vegetable thoran (1 katori)"],q:"1 cup rice, 1 katori each",st:["Cook rice and dal.","Stir-fry chopped vegetables with grated coconut and mustard.","Serve together."]},
+{n:"Egg curry with chapati",m:"Dinner",t:30,c:30,ing:["eggs","wheat flour","onion","tomato"],items:["Chapati (1)","Boiled egg (1)","Chapati (1)"],q:"2 chapatis, 1–2 eggs",st:["Knead dough, roll and cook chapatis.","Boil eggs; simmer in onion-tomato masala."]},
+{n:"Curd rice with beans",m:"Dinner",t:20,c:20,ing:["rice","curd","beans"],items:["Curd rice (1 cup)","Beans curry (1 katori)"],q:"1 cup curd rice, 1 katori beans",st:["Mix cooked rice with curd and salt.","Sauté chopped beans with coconut and serve."]},
+{n:"Peanut and banana snack",m:"Snack",t:2,c:12,ing:["peanuts","banana"],items:["Peanuts (30 g)","Banana (1)"],q:"30 g peanuts, 1 banana",st:["Serve together. No cooking needed."]}];
+const MOVES=[
+{n:"Gentle walk",d:"10–20 min",s:"Walk at a pace where you can still talk. Swing arms loosely.",e:"Seated: march in place on a chair for 2 min."},
+{n:"Neck and shoulder rolls",d:"2 min",s:"Roll shoulders back 8 times, then tilt your ear to each shoulder for 20 sec.",e:"Do it seated."},
+{n:"Standing side stretch",d:"1 min",s:"Reach one arm overhead and lean gently sideways, 20 sec each side.",e:"Do it seated."},
+{n:"Chair squats",d:"2 sets of 6–8",s:"Stand, sit back slowly toward a chair, and rise.",e:"Lower the effort by tapping the seat only partly."},
+{n:"Cat-cow (yoga-inspired)",d:"1 min",s:"On hands and knees, slowly arch then round your back.",e:"Seated: arch and round gently."}];
+const HAB=["Ate a vegetable","Had fruit","Drank water through the day","Moved a little","Slept regularly","Ate without screens"];
+const MSG=["Small steps count. Every nourishing meal helps.","Missing a log is fine. Pick up at the next meal.","Variety on the plate is a good friend.","Be kind to yourself today."];
+// ---- state ----
+const K="thalibloom_v1";let S;
+try{S=JSON.parse(localStorage.getItem(K))}catch(e){}
+S=S||{user:null,meals:[],water:{},habits:{},moves:{},notes:{},stock:[],page:"welcome",step:0};
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){alert("Storage is full. Delete old photos from the diary.")}};
+const $=id=>document.getElementById(id);const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const today=()=>new Date().toISOString().slice(0,10);
+const sum=(arr)=>arr.reduce((a,m)=>a.map((v,i)=>v+(+m.n[i]||0)),[0,0,0,0,0]);
+const dayMeals=d=>S.meals.filter(m=>m.date===d);
+function ref(){const u=S.user||{};const w=+u.w||60,a=+u.age||25;
+ const minor=a<18;let k=Math.round(w*30/50)*50;if(!minor&&u.goal==="gain")k+=250;if(!minor&&u.goal==="lose")k-=200;
+ return{kcal:k,p:Math.round(w*(minor?1:.8)),c:Math.round(k*.5/4),f:Math.round(k*.3/9),fi:25,minor}}
+function go(p){S.page=p;save();render();scrollTo(0,0)}
+function ring(v,t,l,u){const r=34,C=2*Math.PI*r,p=Math.min(v/t,1);
+ return`<div class="ring"><svg width="86" height="86" role="img" aria-label="${l}: ${Math.round(v)} of about ${t}${u}"><circle cx="43" cy="43" r="${r}" fill="none" stroke="#eee8d8" stroke-width="8"/><circle cx="43" cy="43" r="${r}" fill="none" stroke="#6b9a5b" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-p)}" transform="rotate(-90 43 43)"/><text x="43" y="48" text-anchor="middle" font-size="14" fill="#2d3a2b">${Math.round(v)}</text></svg><div>${l}<br><span class="sub">~${t}${u}</span></div></div>`}
+// ---- views ----
+function welcome(){return`<div class="hero"><div class="thali" aria-hidden="true"><i style="left:20px;top:30px;background:#f3e1b0"></i><i style="right:20px;top:30px;background:#cfe0bf"></i><i style="left:72px;bottom:18px;background:#f7c9a8"></i><i style="left:72px;top:72px;width:56px;height:56px;background:#fff;border:2px solid #e8e2d3"></i></div>
+<h1 style="font-size:44px;color:var(--sd)">🌿 ThaliBloom</h1><p style="font-size:20px;font-style:italic">Nourish simply. Bloom naturally.</p>
+<p class="sub" style="max-width:380px">Affordable homemade meals, gentle movement and calm tracking. Your data stays on this device.</p>
+<div class="row" style="max-width:340px;margin-top:16px"><button onclick="go('onboard')">Get Started</button><button class="alt" onclick="go(S.user?'home':'onboard')">Log In</button></div></div>`}
+const STEPS=[
+`<h2>About you</h2><p class="sub">Used only to estimate a gentle reference range.</p><label for="name">Name</label><input id="name" autocomplete="given-name"><label for="age">Age</label><input id="age" type="number" min="5" max="110"><div class="row"><div><label for="h">Height (cm)</label><input id="h" type="number"></div><div><label for="w">Weight (kg)</label><input id="w" type="number"></div></div>`,
+`<h2>Your goals</h2><label for="act">Activity level</label><select id="act"><option>Mostly sitting</option><option>Lightly active</option><option>Quite active</option></select><label for="goal">Main goal</label><select id="goal"><option value="habits">Build healthy habits</option><option value="nutrition">Improve nutrition</option><option value="maintain">Maintain weight</option><option value="gain">Gain weight</option><option value="lose">Lose weight</option></select><label for="diet">Diet preference</label><select id="diet"><option>Vegetarian</option><option>Non-vegetarian</option><option>Vegan</option><option>Other</option></select>`,
+`<h2>Health &amp; food (optional)</h2><p class="sub">Skip anything you prefer. This helps us stay careful, and we never diagnose.</p><label for="allergy">Allergies or intolerances</label><input id="allergy"><label for="cond">Conditions or restrictions you'd like us to be mindful of</label><input id="cond"><label for="budget">Daily food budget (₹)</label><input id="budget" type="number"><label for="region">Region / cuisine</label><input id="region" value="Kerala">`];
+function onboard(){const last=S.step===STEPS.length-1;return`<main><div class="card"><div class="bar"><b style="width:${(S.step+1)/STEPS.length*100}%"></b></div>${STEPS[S.step]}
+<div class="note">ThaliBloom offers general wellness information, not medical advice. If you are pregnant, have an eating-disorder concern or a significant medical condition, please follow your healthcare professional's guidance.</div>
+<div class="row">${S.step?'<button class="alt" onclick="prev()">Back</button>':''}<button onclick="next()">${last?'Finish':'Continue'}</button></div><p id="err" class="sub" role="alert" style="color:#a33"></p></div></main>`}
+const draft={};
+function grab(){document.querySelectorAll("#app input,#app select").forEach(e=>draft[e.id]=e.value)}
+function restore(){for(const k in draft){const e=$(k);if(e)e.value=draft[k]}}
+function prev(){grab();S.step--;render()}
+function next(){grab();const e=$("err");
+ if(S.step===0&&(!draft.name?.trim()||!(+draft.age>=5)||!(+draft.h>=50)||!(+draft.w>=10))){e.textContent="Please enter your name, a valid age, height and weight.";return}
+ if(S.step<STEPS.length-1){S.step++;render();return}
+ S.user={name:draft.name.trim(),age:+draft.age,h:+draft.h,w:+draft.w,act:draft.act,goal:draft.goal,diet:draft.diet,allergy:draft.allergy,cond:draft.cond,budget:draft.budget,region:draft.region};
+ go("home")}
+function home(){const t=today(),r=ref(),ms=dayMeals(t),s=sum(ms),wt=S.water[t]||0,hb=S.habits[t]||[];
+ const wk=[...Array(7)].map((_,i)=>{const d=new Date(Date.now()-(6-i)*864e5).toISOString().slice(0,10);return sum(dayMeals(d))[0]});const mx=Math.max(...wk,1);
+ const logged=MEALS.map(m=>ms.some(x=>x.type===m));
+ return`<main><h1>Hello, ${esc(S.user.name)} 🌱</h1><p class="sub">${new Date().toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"})} · ${MSG[new Date().getDate()%MSG.length]}</p>
+<div class="card"><h3>Today's estimated intake</h3><div class="rings">${ring(s[0],r.kcal,"Calories","")+ring(s[1],r.p,"Protein","g")+ring(s[2],r.c,"Carbs","g")+ring(s[3],r.f,"Fat","g")+ring(s[4],r.fi,"Fibre","g")}</div>
+<p class="sub">Estimates from typical serving values, not measurements. Reference ranges are gentle guides, not limits.${r.minor?" For under-18s, focus on balanced meals and ask a healthcare professional about needs.":""}</p>
+<div>${MEALS.map((m,i)=>`<span class="chip ${logged[i]?"on":""}">${logged[i]?"✓ ":""}${m}</span>`).join("")}</div></div>
+<div class="grid"><div class="card"><h3>💧 Water</h3><p>${wt} glasses</p><div class="row"><button class="sm" onclick="water(1)">+ glass</button><button class="sm alt" onclick="water(-1)">−</button></div></div>
+<div class="card"><h3>Habits</h3>${HAB.map((h,i)=>`<label style="display:flex;gap:8px;font:14px system-ui;margin:4px 0;color:var(--ink)"><input type="checkbox" style="width:auto" ${hb.includes(i)?"checked":""} onchange="hab(${i})">${h}</label>`).join("")}</div></div>
+<div class="card"><h3>This week · calories logged</h3><div class="wk" role="img" aria-label="Weekly calories bar chart">${wk.map(v=>`<div style="height:${v/mx*100}%" title="${Math.round(v)} kcal"></div>`).join("")}</div><p class="sub">Days with no entries show as empty, not as zero intake.</p></div>
+<div class="card"><h3>Gentle suggestion</h3><p>${suggest(s,ms)}</p><div class="row"><button class="sm" onclick="go('kitchen')">Kitchen ideas</button><button class="sm alt" onclick="go('move')">Move gently</button></div></div></main>`}
+function suggest(s,ms){if(!ms.length)return"No meals logged yet. Log what you ate when you're ready, no pressure.";
+ const types=new Set(ms.map(m=>m.type));if(s[1]<20&&ms.length>=2)return"You could add a protein-rich food like dal, egg, curd or peanuts to your next meal. Records may be incomplete, so treat this as a hint only.";
+ if(s[4]<8&&ms.length>=2)return"A vegetable or fruit at your next meal would add fibre.";return"Your log looks balanced so far. Keep going at your own pace."}
+function water(n){const t=today();S.water[t]=Math.max(0,(S.water[t]||0)+n);save();render()}
+function hab(i){const t=today(),a=S.habits[t]||[];S.habits[t]=a.includes(i)?a.filter(x=>x!==i):[...a,i];save()}
+// Add meal
+let pend=null;
+function add(){const nowL=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,16);
+ return`<main><div class="card"><h2>📸 Snap Your Plate</h2>
+<div class="note">Automatic food recognition needs an external vision service that isn't connected here, so please enter foods yourself. A photo can't give an exact calorie count, because oil, hidden ingredients and portions change a lot.</div>
+<label for="ph">Photo (optional, JPG/PNG/WebP up to 8 MB)</label><input id="ph" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onchange="photo(this)"><img id="pv" class="photo hide" alt="Meal preview">
+<div class="row"><div><label for="mt">Meal</label><select id="mt">${MEALS.map(m=>`<option>${m}</option>`).join("")}</select></div><div><label for="dt">Date and time</label><input id="dt" type="datetime-local" value="${nowL}"></div></div>
+<label for="fd">Food (servings from the list)</label><div class="row"><select id="fd">${Object.keys(FOODS).map(f=>`<option>${f}</option>`).join("")}</select><input id="sv" type="number" step=".25" min=".25" value="1" aria-label="Servings" style="max-width:100px"><button class="sm" onclick="addItem()">Add</button></div>
+<div id="items"></div>
+<label for="nt">Notes: ingredients, cooking oil, method (optional)</label><textarea id="nt" rows="2"></textarea>
+<p id="err" class="sub" role="alert" style="color:#a33"></p><button onclick="saveMeal()">Save to my log</button></div></main>`}
+function photo(inp){const f=inp.files[0];const e=$("err");if(!f)return;
+ if(!/^image\/(jpeg|png|webp)$/.test(f.type)||f.size>8e6){e.textContent="Please choose a JPG, PNG or WebP under 8 MB.";inp.value="";return}
+ const img=new Image();img.onload=()=>{const c=document.createElement("canvas"),r=Math.min(1,480/img.width);c.width=img.width*r;c.height=img.height*r;c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+  pend=pend||{items:[]};pend.img=c.toDataURL("image/jpeg",.7);const p=$("pv");p.src=pend.img;p.classList.remove("hide");e.textContent=""};img.src=URL.createObjectURL(f)}
+function addItem(){pend=pend||{items:[]};pend.items.push([$("fd").value,+$("sv").value||1]);showItems()}
+function showItems(){const el=$("items");if(!el||!pend)return;const t=sum(pend.items.map(([f,q])=>({n:FOODS[f].map(v=>v*q)})));
+ el.innerHTML=pend.items.map(([f,q],i)=>`<div class="row sub"><span>${q} × ${esc(f)}</span><button class="sm alt" onclick="pend.items.splice(${i},1);showItems()" aria-label="Remove ${esc(f)}">Remove</button></div>`).join("")+
+ (pend.items.length?`<p class="sub">Estimate: ~${Math.round(t[0])} kcal · P ${t[1].toFixed(1)}g · C ${t[2].toFixed(1)}g · F ${t[3].toFixed(1)}g · Fibre ${t[4].toFixed(1)}g. Based on typical serving values; your oil and portions may differ.</p>`:"")}
+function saveMeal(){const e=$("err");if(!pend||!pend.items.length){e.textContent="Add at least one food item first.";return}
+ const dt=$("dt").value;if(!dt){e.textContent="Please set a date and time.";return}
+ const n=sum(pend.items.map(([f,q])=>({n:FOODS[f].map(v=>v*q)})));
+ S.meals.push({id:Date.now(),type:$("mt").value,date:dt.slice(0,10),time:dt.slice(11),items:pend.items,n,note:$("nt").value,img:pend.img||null});
+ pend=null;save();go("diary")}
+function diary(){const dates=[...new Set(S.meals.map(m=>m.date))].sort().reverse();
+ return`<main><h1>Food Diary</h1><p class="sub">Estimates only. Days with few entries may be incomplete.</p>${!dates.length?`<div class="card">Nothing here yet. Tap + to log your first meal.</div>`:dates.map(d=>{const ms=dayMeals(d),s=sum(ms),w=S.water[d]||0;
+ return`<div class="card"><h3>${new Date(d+"T00:00").toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"})}</h3><p class="sub">~${Math.round(s[0])} kcal · P ${Math.round(s[1])}g · C ${Math.round(s[2])}g · F ${Math.round(s[3])}g · Fibre ${Math.round(s[4])}g · 💧 ${w}${ms.length<3?" · partial log":""}</p>
+ ${ms.map(m=>`<div class="row" style="margin:8px 0">${m.img?`<img class="photo" style="max-width:90px;height:70px" src="${m.img}" alt="${esc(m.type)} photo">`:""}<div style="flex:3"><b>${m.type}</b> <span class="sub">${m.time} · ~${Math.round(m.n[0])} kcal</span><br><span class="sub">${m.items.map(([f,q])=>q+"× "+esc(f)).join(", ")}${m.note?" — "+esc(m.note):""}</span></div><button class="sm alt" style="flex:0" onclick="del(${m.id})" aria-label="Delete ${m.type} entry">Delete</button></div>`).join("")}
+ <label for="n${d}">Energy / how I felt</label><input id="n${d}" value="${esc(S.notes[d]||"")}" onchange="S.notes['${d}']=this.value;save()"></div>`}).join("")}</main>`}
+function del(id){if(confirm("Delete this entry?")){S.meals=S.meals.filter(m=>m.id!==id);save();render()}}
+function kitchen(){const have=S.stock;
+ const sc=r=>r.ing.filter(i=>have.some(h=>i.includes(h)||h.includes(i))).length;
+ const list=[...REC].map(r=>({...r,s:sc(r),miss:r.ing.filter(i=>!have.some(h=>i.includes(h)||h.includes(i)))})).sort((a,b)=>b.s-a.s);
+ const budget=+S.user.budget||0;
+ return`<main><h1>🍲 My Home Kitchen</h1><div class="card"><label for="stk">Ingredients you have (comma-separated)</label><input id="stk" placeholder="rice, dal, vegetables, curd, eggs…" value="${esc(have.join(", "))}">
+<div class="row" style="margin-top:10px"><button onclick="setStock()">Find meals</button><button class="alt" onclick="useHave()">Use What I Have</button></div><p class="sub">${S.user.allergy?"Check each recipe against your listed allergies: "+esc(S.user.allergy)+". ":""}Costs are rough home estimates in ₹ and vary by market.</p></div>
+${list.filter(r=>!S.only||r.miss.length===0).map(r=>{const n=sum(r.items.map(f=>({n:FOODS[f]})));
+ return`<div class="card"><h3>${r.n} <span class="chip">${r.m}</span></h3><p class="sub">${r.t} min · ≈₹${r.c}/serving${budget&&r.c>budget/3?" (may be a stretch for your budget)":""} · ~${Math.round(n[0])} kcal · P ${Math.round(n[1])}g · fibre ${Math.round(n[4])}g (approx.)</p>
+ <p><b>Makes:</b> ${r.q}</p><p class="sub">Ingredients: ${r.ing.map(i=>`<span class="chip ${r.miss.includes(i)?"":"on"}">${i}</span>`).join("")}</p>${r.miss.length?`<p class="sub">Missing: ${r.miss.join(", ")}. Swap in similar items such as other lentils or seasonal vegetables.</p>`:""}
+ <ol>${r.st.map(x=>`<li>${x}</li>`).join("")}</ol><button class="sm" onclick="logRec('${r.n}')">Log this meal</button></div>`}).join("")}</main>`}
+function setStock(){S.stock=$("stk").value.toLowerCase().split(",").map(x=>x.trim()).filter(Boolean);S.only=false;save();render()}
+function useHave(){S.stock=$("stk").value.toLowerCase().split(",").map(x=>x.trim()).filter(Boolean);S.only=true;save();render()}
+function logRec(n){const r=REC.find(x=>x.n===n);const items={};r.items.forEach(f=>items[f]=(items[f]||0)+1);
+ pend={items:Object.entries(items)};go("add");setTimeout(()=>{$("mt").value=r.m==="Snack"?"Snack":r.m;showItems()},0)}
+function move(){const t=today(),d=S.moves[t]||[];const a=+S.user.age;
+ return`<main><h1>🧘 Move Gently</h1><div class="note">Movement supports your wellbeing. It is never a punishment for eating. Stop and seek medical advice if you feel pain, dizziness, chest discomfort or unusual breathlessness. Check with a professional first if you have a health condition or limitation.</div>
+${MOVES.map((m,i)=>`<div class="card"><h3>${m.n} <span class="chip">${m.d}</span></h3><p>${m.s}</p><p class="sub"><b>Lower-impact:</b> ${m.e}</p><label style="display:flex;gap:8px;color:var(--ink)"><input type="checkbox" style="width:auto" ${d.includes(i)?"checked":""} onchange="mv(${i})">Done today</label></div>`).join("")}${a>=60?'<p class="sub">Tip: keep a chair or wall nearby for balance.</p>':""}</main>`}
+function mv(i){const t=today(),a=S.moves[t]||[];S.moves[t]=a.includes(i)?a.filter(x=>x!==i):[...a,i];save()}
+function profile(){const u=S.user;return`<main><h1>Profile &amp; Privacy</h1><div class="card"><h3>${esc(u.name)}</h3><p class="sub">${u.age} yrs · ${u.h} cm · ${u.w} kg · ${esc(u.diet)} · ${esc(u.region||"")}</p>
+<p class="sub">Reference range today: about ${ref().kcal} kcal, ${ref().p} g protein. This is a rough estimate, not a prescription.</p>
+<div class="row"><button class="alt" onclick="exp()">Export my data</button><button class="alt" onclick="S.step=0;go('onboard')">Edit profile</button><button class="alt" onclick="go('welcome')">Log out</button></div></div>
+<div class="card"><h3>Privacy &amp; help</h3><p class="sub">All data is stored only in this browser on this device. There is no server account, email verification, password reset or cross-device sync in this version. Those need a backend such as Firebase or Supabase. Food recognition and a verified food database (for example IFCT) also need external services. Nutrient values here are typical approximations. Reminders need a notification service and aren't included.</p>
+<button style="background:#a33" onclick="if(confirm('Delete all your data permanently?')){localStorage.removeItem(K);location.reload()}">Delete account &amp; data</button></div></main>`}
+function exp(){const b=new Blob([JSON.stringify(S,null,1)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="thalibloom-data.json";a.click()}
+// ---- router ----
+const NAV=[["home","🏠","Home"],["diary","📖","Diary"],["add","＋","Add"],["kitchen","🍲","Kitchen"],["profile","👤","Profile"]];
+function render(){let p=S.page;if(!S.user&&p!=="welcome"&&p!=="onboard")p="welcome";
+ const V={welcome,onboard,home,add,diary,kitchen,move,profile};$("app").innerHTML=V[p]();
+ const n=$("nav");const show=S.user&&!["welcome","onboard"].includes(p);n.classList.toggle("hide",!show);
+ n.innerHTML=NAV.map(([k,i,l])=>`<button class="${k==="add"?"add":""} ${k===p?"on":""}" onclick="go('${k}')" aria-label="${l}"><span class="ic">${i}</span>${k==="add"?"":l}</button>`).join("");
+ if(p==="onboard")restore();if(p==="add")showItems();
+ if(p==="home"||p==="diary")n.insertAdjacentHTML("afterbegin","")}
+render();
+</script></body></html>
